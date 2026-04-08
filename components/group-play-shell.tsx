@@ -2,14 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Copy, DoorOpen, Play, Trophy, Users } from "lucide-react";
+import { Copy, DoorOpen, Play, RefreshCcw, Shuffle, Trophy, Users } from "lucide-react";
 import { useAppContext } from "@/components/app-providers";
 import { ModeSelector } from "@/components/mode-selector";
 import { ObjectList } from "@/components/object-list";
 import { ProgressBar } from "@/components/progress-bar";
 import { SceneBoard } from "@/components/scene-board";
 import { Timer } from "@/components/timer";
-import { scenes, type GameMode } from "@/data/game-data";
+import { featuredScenes, scenes, type GameMode } from "@/data/game-data";
 
 type RoomPlayer = {
   id: string;
@@ -17,6 +17,8 @@ type RoomPlayer = {
   score: number;
   lives: number;
   foundIds: string[];
+  missCount: number;
+  hintCount: number;
 };
 
 type RoomState = {
@@ -133,6 +135,12 @@ export function GroupPlayShell() {
     return () => window.clearInterval(interval);
   }, [room?.pin]);
 
+  useEffect(() => {
+    if (room?.status === "lobby") {
+      setMode(room.mode);
+    }
+  }, [room?.mode, room?.status]);
+
   const sortedPlayers = [...(room?.players ?? [])].sort((a, b) => {
     if (b.score !== a.score) {
       return b.score - a.score;
@@ -248,22 +256,84 @@ export function GroupPlayShell() {
               </p>
 
               {room.hostId === playerId && room.status === "lobby" ? (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const data = await postJson("/api/group-rooms", {
-                      action: "start",
-                      pin: room.pin,
-                      playerId,
-                      mode,
-                    });
-                    setRoom(data.room);
-                  }}
-                  className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-accent font-medium text-slate-950 transition hover:scale-[1.01]"
-                >
-                  <Play size={18} />
-                  {t.startRace}
-                </button>
+                <div className="mt-4 space-y-3">
+                  <div className="grid gap-3">
+                    <div className="rounded-2xl border border-border bg-surface-soft p-3">
+                      <p className="mb-3 text-xs uppercase tracking-[0.2em] text-muted">Scene</p>
+                      <select
+                        value={room.sceneId}
+                        onChange={async (event) => {
+                          const data = await postJson("/api/group-rooms", {
+                            action: "setup",
+                            pin: room.pin,
+                            playerId,
+                            sceneId: event.target.value,
+                          });
+                          setRoom(data.room);
+                        }}
+                        className="h-12 w-full rounded-2xl border border-border bg-background/30 px-4 outline-none"
+                      >
+                        {featuredScenes.map((entry) => (
+                          <option key={entry.id} value={entry.id}>
+                            {entry.title[locale]}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const nextScene =
+                          featuredScenes.find((entry) => entry.id !== room.sceneId)?.id ?? featuredScenes[0].id;
+                        const data = await postJson("/api/group-rooms", {
+                          action: "setup",
+                          pin: room.pin,
+                          playerId,
+                          sceneId: nextScene,
+                          refreshTargets: true,
+                        });
+                        setRoom(data.room);
+                      }}
+                      className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-surface-soft font-medium transition hover:border-accent/35 hover:bg-accent/8"
+                    >
+                      <Shuffle size={16} />
+                      Sahneyi Degistir
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const data = await postJson("/api/group-rooms", {
+                          action: "setup",
+                          pin: room.pin,
+                          playerId,
+                          mode,
+                          refreshTargets: true,
+                        });
+                        setRoom(data.room);
+                      }}
+                      className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-surface-soft font-medium transition hover:border-accent/35 hover:bg-accent/8"
+                    >
+                      <RefreshCcw size={16} />
+                      Obje Listesini Yenile
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const data = await postJson("/api/group-rooms", {
+                        action: "start",
+                        pin: room.pin,
+                        playerId,
+                        mode,
+                      });
+                      setRoom(data.room);
+                    }}
+                    className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-accent font-medium text-slate-950 transition hover:scale-[1.01]"
+                  >
+                    <Play size={18} />
+                    {t.startRace}
+                  </button>
+                </div>
               ) : null}
             </div>
 

@@ -1,4 +1,4 @@
-import { modeConfig, scenes, type GameMode } from "@/data/game-data";
+import { featuredScenes, modeConfig, scenes, type GameMode } from "@/data/game-data";
 
 type RoomStatus = "lobby" | "playing" | "finished";
 
@@ -8,6 +8,8 @@ export type RoomPlayer = {
   score: number;
   lives: number;
   foundIds: string[];
+  missCount: number;
+  hintCount: number;
   joinedAt: number;
 };
 
@@ -48,7 +50,7 @@ function getScene(sceneId: string) {
 }
 
 function pickScene() {
-  return scenes[Math.floor(Math.random() * scenes.length)] ?? scenes[0];
+  return featuredScenes[Math.floor(Math.random() * featuredScenes.length)] ?? featuredScenes[0];
 }
 
 function pickTargets(sceneId: string, mode: GameMode) {
@@ -76,6 +78,28 @@ function syncRoom(room: RoomState) {
   return room;
 }
 
+function calculateScore(player: RoomPlayer, room: RoomState) {
+  let score = player.foundIds.length * 120;
+  score -= player.missCount * 35;
+  score -= player.hintCount * 30;
+
+  const clearedRoom = player.foundIds.length >= room.targetIds.length && room.targetIds.length > 0;
+  if (clearedRoom && room.startAt) {
+    score += Math.max(0, room.duration - Math.floor((Date.now() - room.startAt) / 1000)) * 2;
+  }
+
+  return Math.max(score, 0);
+}
+
+function refreshScores(room: RoomState) {
+  room.players = room.players.map((player) => ({
+    ...player,
+    score: calculateScore(player, room),
+  }));
+
+  return room;
+}
+
 export function createRoom(nickname: string) {
   const pin = randomId(6);
   const playerId = crypto.randomUUID();
@@ -97,13 +121,15 @@ export function createRoom(nickname: string) {
         score: 0,
         lives: 3,
         foundIds: [],
+        missCount: 0,
+        hintCount: 0,
         joinedAt: Date.now(),
       },
     ],
   };
 
   getStore().set(pin, room);
-  return { room: syncRoom(room), playerId };
+  return { room: refreshScores(syncRoom(room)), playerId };
 }
 
 export function joinRoom(pin: string, nickname: string) {
@@ -119,10 +145,12 @@ export function joinRoom(pin: string, nickname: string) {
     score: 0,
     lives: 3,
     foundIds: [],
+    missCount: 0,
+    hintCount: 0,
     joinedAt: Date.now(),
   });
 
-  return { room: syncRoom(room), playerId };
+  return { room: refreshScores(syncRoom(room)), playerId };
 }
 
 export function getRoom(pin: string) {
@@ -131,7 +159,7 @@ export function getRoom(pin: string) {
     return null;
   }
 
-  return syncRoom(room);
+  return refreshScores(syncRoom(room));
 }
 
 export function startRoom(pin: string, playerId: string, mode: GameMode) {
@@ -152,9 +180,11 @@ export function startRoom(pin: string, playerId: string, mode: GameMode) {
     score: 0,
     lives: 3,
     foundIds: [],
+    missCount: 0,
+    hintCount: 0,
   }));
 
-  return syncRoom(room);
+  return refreshScores(syncRoom(room));
 }
 
 export function submitGuess(pin: string, playerId: string, objectId: string) {
@@ -178,17 +208,12 @@ export function submitGuess(pin: string, playerId: string, objectId: string) {
 
   if (isTarget && !alreadyFound) {
     player.foundIds.push(objectId);
-    player.score += 120;
   } else if (!isTarget) {
     player.lives = Math.max(player.lives - 1, 0);
-    player.score = Math.max(player.score - 35, 0);
+    player.missCount += 1;
   }
 
-  if (player.foundIds.length >= room.targetIds.length) {
-    player.score += Math.max(0, room.duration - Math.floor((Date.now() - (room.startAt ?? Date.now())) / 1000)) * 2;
-  }
-
-  return syncRoom(room);
+  return refreshScores(syncRoom(room));
 }
 
 export function useRoomHint(pin: string, playerId: string) {
@@ -202,6 +227,32 @@ export function useRoomHint(pin: string, playerId: string) {
     return room;
   }
 
-  player.score = Math.max(player.score - 30, 0);
-  return syncRoom(room);
+  player.hintCount += 1;
+  return refreshScores(syncRoom(room));
+}
+
+export function updateRoomSetup(
+  pin: string,
+  playerId: string,
+  payload: { mode?: GameMode; sceneId?: string; refreshTargets?: boolean },
+) {
+  const room = getStore().get(pin);
+  if (!room || room.hostId !== playerId || room.status !== "lobby") {
+    return null;
+  }
+
+  if (payload.mode) {
+    room.mode = payload.mode;
+    room.duration = modeConfig[payload.mode].duration;
+  }
+
+  if (payload.sceneId && featuredScenes.some((scene) => scene.id === payload.sceneId)) {
+    room.sceneId = payload.sceneId;
+  }
+
+  if (payload.refreshTargets) {
+    room.targetIds = pickTargets(room.sceneId, room.mode);
+  }
+
+  return refreshScores(syncRoom(room));
 }

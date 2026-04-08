@@ -1,14 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { modeConfig, scenes, type GameMode, type SceneDefinition } from "@/data/game-data";
+import { featuredScenes, modeConfig, type GameMode, type SceneDefinition } from "@/data/game-data";
 import { detectIntent } from "@/lib/intent";
 
 type Toast = { type: "success" | "error"; message: string; id: number } | null;
 
 function pickNextScene(currentSceneId?: string) {
-  const pool = currentSceneId ? scenes.filter((scene) => scene.id !== currentSceneId) : scenes;
-  return pool[Math.floor(Math.random() * pool.length)] ?? scenes[0];
+  const pool = currentSceneId
+    ? featuredScenes.filter((scene) => scene.id !== currentSceneId)
+    : featuredScenes;
+  return pool[Math.floor(Math.random() * pool.length)] ?? featuredScenes[0];
 }
 
 function pickTargets(scene: SceneDefinition, mode: GameMode) {
@@ -18,8 +20,8 @@ function pickTargets(scene: SceneDefinition, mode: GameMode) {
 
 export function useFocusGame() {
   const [mode, setMode] = useState<GameMode>("quick");
-  const [scene, setScene] = useState<SceneDefinition>(() => scenes[0]);
-  const [targets, setTargets] = useState(() => pickTargets(scenes[0], "quick"));
+  const [scene, setScene] = useState<SceneDefinition>(() => featuredScenes[0]);
+  const [targets, setTargets] = useState(() => pickTargets(featuredScenes[0], "quick"));
   const [found, setFound] = useState<string[]>([]);
   const [lives, setLives] = useState(3);
   const [score, setScore] = useState(0);

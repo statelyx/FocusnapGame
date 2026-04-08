@@ -351,6 +351,18 @@ export const scenes: SceneDefinition[] = [
   },
 ];
 
+export const featuredSceneIds = [
+  "desk-01",
+  "desk-03",
+  "living-room-02",
+  "bedroom-01",
+  "living-room-01",
+] as const;
+
+export const featuredScenes = scenes.filter((scene) =>
+  featuredSceneIds.includes(scene.id as (typeof featuredSceneIds)[number]),
+);
+
 export const modeConfig: Record<
   GameMode,
   { duration: number; objectCount: number; hints: number }

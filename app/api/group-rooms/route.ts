@@ -4,6 +4,7 @@ import {
   joinRoom,
   startRoom,
   submitGuess,
+  updateRoomSetup,
   useRoomHint,
 } from "@/lib/group-room-store";
 
@@ -38,6 +39,19 @@ export async function POST(request: Request) {
     const room = startRoom(body.pin?.toUpperCase(), body.playerId, body.mode);
     if (!room) {
       return NextResponse.json({ error: "cannot-start-room" }, { status: 400 });
+    }
+
+    return NextResponse.json({ room });
+  }
+
+  if (action === "setup") {
+    const room = updateRoomSetup(body.pin?.toUpperCase(), body.playerId, {
+      mode: body.mode,
+      sceneId: body.sceneId,
+      refreshTargets: body.refreshTargets,
+    });
+    if (!room) {
+      return NextResponse.json({ error: "cannot-update-room" }, { status: 400 });
     }
 
     return NextResponse.json({ room });
