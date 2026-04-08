@@ -53,6 +53,8 @@ export function GroupPlayShell() {
   const [playerId, setPlayerId] = useState("");
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
+  const [joinError, setJoinError] = useState("");
+  const [isJoiningFromLink, setIsJoiningFromLink] = useState(false);
 
   const scene = useMemo(
     () => scenes.find((entry) => entry.id === room?.sceneId) ?? scenes[0],
@@ -78,6 +80,40 @@ export function GroupPlayShell() {
       setPinInput(fromUrl.toUpperCase());
     }
   }, []);
+
+  useEffect(() => {
+    if (!nickname || !pinInput || room || playerId || isJoiningFromLink) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get("room");
+    if (!fromUrl || fromUrl.toUpperCase() !== pinInput.toUpperCase()) {
+      return;
+    }
+
+    const joinFromLink = async () => {
+      setIsJoiningFromLink(true);
+      setJoinError("");
+
+      try {
+        const data = await postJson("/api/group-rooms", {
+          action: "join",
+          nickname,
+          pin: pinInput.trim(),
+        });
+        setRoom(data.room);
+        setPlayerId(data.playerId);
+        window.history.replaceState({}, "", `${window.location.pathname}?room=${data.room.pin}#group`);
+      } catch {
+        setJoinError("Oda baglantisi bulundu ama oda verisi sunucuda korunmuyor olabilir.");
+      } finally {
+        setIsJoiningFromLink(false);
+      }
+    };
+
+    void joinFromLink();
+  }, [isJoiningFromLink, nickname, pinInput, playerId, room]);
 
   useEffect(() => {
     if (!room?.pin) {
@@ -122,9 +158,11 @@ export function GroupPlayShell() {
                 type="button"
                 disabled={!nickname}
                 onClick={async () => {
+                  setJoinError("");
                   const data = await postJson("/api/group-rooms", { action: "create", nickname });
                   setRoom(data.room);
                   setPlayerId(data.playerId);
+                  window.history.replaceState({}, "", `${window.location.pathname}?room=${data.room.pin}#group`);
                 }}
                 className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-accent font-medium text-slate-950 transition hover:scale-[1.01] disabled:opacity-50"
               >
@@ -144,19 +182,28 @@ export function GroupPlayShell() {
                 type="button"
                 disabled={!nickname || pinInput.trim().length < 4}
                 onClick={async () => {
-                  const data = await postJson("/api/group-rooms", {
-                    action: "join",
-                    nickname,
-                    pin: pinInput.trim(),
-                  });
-                  setRoom(data.room);
-                  setPlayerId(data.playerId);
+                  setJoinError("");
+                  try {
+                    const data = await postJson("/api/group-rooms", {
+                      action: "join",
+                      nickname,
+                      pin: pinInput.trim(),
+                    });
+                    setRoom(data.room);
+                    setPlayerId(data.playerId);
+                    window.history.replaceState({}, "", `${window.location.pathname}?room=${data.room.pin}#group`);
+                  } catch {
+                    setJoinError("Oda bulunamadi veya paylasilan oda verisi su an erisilebilir degil.");
+                  }
                 }}
                 className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl border border-border bg-surface-soft font-medium transition hover:border-accent/35 hover:bg-accent/8 disabled:opacity-50"
               >
                 <DoorOpen size={18} />
                 {t.joinAction}
               </button>
+              {joinError ? (
+                <p className="mt-3 text-sm leading-6 text-error">{joinError}</p>
+              ) : null}
             </div>
           </div>
 
@@ -234,7 +281,7 @@ export function GroupPlayShell() {
                           {index + 1}. {player.nickname} {player.id === room.hostId ? `(${t.host})` : ""}
                         </p>
                         <p className="mt-1 text-xs text-muted">
-                          {player.foundIds.length}/{room.targetIds.length} found · {player.lives}/3 {t.livesLabel.toLocaleLowerCase(locale)}
+                          {player.foundIds.length}/{room.targetIds.length} found - {player.lives}/3 {t.livesLabel.toLocaleLowerCase(locale)}
                         </p>
                       </div>
                       <p className="font-display text-xl font-semibold">{player.score}</p>

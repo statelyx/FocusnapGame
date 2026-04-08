@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Languages, MoonStar, SunMedium } from "lucide-react";
 import { useAppContext } from "@/components/app-providers";
@@ -15,13 +16,14 @@ export function Header() {
       className="glass-panel sticky top-4 z-40 mt-2 flex items-center justify-between rounded-3xl px-4 py-3"
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/16 text-accent ring-1 ring-inset ring-accent/25">
-          <span className="font-display text-lg font-semibold">FN</span>
-        </div>
-        <div>
-          <p className="font-display text-lg font-semibold tracking-tight">{t.brand}</p>
-          <p className="text-sm text-muted">{t.voiceCommands}</p>
-        </div>
+        <Image
+          src="/logo.png"
+          alt="FocusnapGame"
+          width={220}
+          height={60}
+          priority
+          className="h-12 w-auto sm:h-14"
+        />
       </div>
 
       <div className="hidden items-center gap-6 text-sm text-muted md:flex">
