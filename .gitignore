@@ -1,0 +1,6 @@
+.next
+node_modules
+.npm-cache
+.dev-server.log
+.dev-server.err
+scenes

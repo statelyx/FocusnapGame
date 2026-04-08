@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+:root {
+  --background: #07111f;
+  --background-elevated: #0d1828;
+  --surface: rgba(10, 20, 34, 0.8);
+  --surface-strong: rgba(15, 27, 44, 0.96);
+  --surface-soft: rgba(17, 31, 51, 0.62);
+  --border: rgba(157, 177, 204, 0.16);
+  --foreground: #ecf4ff;
+  --muted: #9fb0c8;
+  --accent: #54a4ff;
+  --teal: #4dd0c8;
+  --amber: #ffb95c;
+  --success: #50d38a;
+  --error: #f17b85;
+  --shadow: 0 20px 60px rgba(2, 8, 20, 0.45);
+}
+
+[data-theme="light"] {
+  --background: #eef3f8;
+  --background-elevated: #f8fbff;
+  --surface: rgba(255, 255, 255, 0.78);
+  --surface-strong: rgba(255, 255, 255, 0.95);
+  --surface-soft: rgba(255, 255, 255, 0.68);
+  --border: rgba(73, 97, 129, 0.14);
+  --foreground: #102036;
+  --muted: #5f7089;
+  --accent: #2f7ef7;
+  --teal: #0da9a4;
+  --amber: #c68720;
+  --success: #229b61;
+  --error: #cf5460;
+  --shadow: 0 24px 60px rgba(25, 54, 91, 0.12);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-elevated: var(--background-elevated);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-surface-soft: var(--surface-soft);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-teal: var(--teal);
+  --color-amber: var(--amber);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(84, 164, 255, 0.28);
+}
+
+.glass-panel {
+  background: linear-gradient(180deg, var(--surface-strong), var(--surface-soft));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(84, 164, 255, 0.24);
+}
+
+.noise {
+  position: relative;
+}
+
+.noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.08;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.34) 0 0.7px, transparent 0.9px),
+    radial-gradient(circle at 80% 40%, rgba(255, 255, 255, 0.2) 0 0.7px, transparent 1px),
+    radial-gradient(circle at 60% 80%, rgba(255, 255, 255, 0.18) 0 0.7px, transparent 1px);
+  background-size: 22px 22px, 30px 30px, 26px 26px;
+}
