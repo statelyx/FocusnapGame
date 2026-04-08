@@ -31,7 +31,7 @@ export function GameShell({ game }: { game: GameHook }) {
         </p>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[0.28fr_0.72fr]">
+      <div className="grid gap-6 xl:grid-cols-[0.22fr_0.78fr]">
         <aside className="space-y-5">
           <ModeSelector mode={game.mode} onChange={game.setMode} />
 

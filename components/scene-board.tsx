@@ -62,7 +62,6 @@ export function SceneBoard({
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,_rgba(4,10,18,0.03),_rgba(4,10,18,0.18))]" />
 
         {scene.objects.map((item) => {
-          const isTarget = targets.some((target) => target.id === item.id);
           const isFound = found.includes(item.id);
           const isHighlighted = highlighted === item.id;
 
@@ -74,7 +73,7 @@ export function SceneBoard({
                 event.stopPropagation();
                 onObjectClick(item.id);
               }}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: isFound ? 1 : 1.01 }}
               whileTap={{ scale: 0.97 }}
               animate={{
                 opacity: isFound ? 0.4 : isHighlighted ? 1 : 1,
@@ -90,14 +89,12 @@ export function SceneBoard({
                     : "rgba(255,255,255,0)",
               }}
               className={cn(
-                "absolute rounded-[0.85rem] border transition",
+                "absolute cursor-pointer rounded-[0.85rem] border transition focus:outline-none",
                 isFound
                   ? "border-success/55"
                   : isHighlighted
                     ? "border-accent/70"
-                    : isTarget
-                      ? "border-transparent hover:border-white/15"
-                      : "border-transparent hover:border-error/15",
+                    : "border-transparent hover:border-transparent",
               )}
               style={{
                 left: `${item.x}%`,
